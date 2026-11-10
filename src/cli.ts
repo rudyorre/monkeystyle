@@ -5,7 +5,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { generateBridge, ROLE_DESCRIPTIONS, type BridgeOptions } from "./bridge.ts";
+import { generateBridge, ROLE_DESCRIPTIONS, roleExpression, type BridgeOptions, type Role } from "./bridge.ts";
 import { getTheme, headScript, listThemes, themeCSS, UPSTREAM } from "./index.ts";
 
 const HELP = `monkeystyle: Monkeytype themes for any website
@@ -100,8 +100,8 @@ switch (command) {
     break;
   case "roles":
     process.stdout.write(
-      Object.entries(ROLE_DESCRIPTIONS)
-        .map(([r, d]) => `${r.padEnd(13)} ${d}`)
+      (Object.entries(ROLE_DESCRIPTIONS) as [Role, string][])
+        .map(([r, d]) => `${r.padEnd(13)} ${d.padEnd(44)} ${roleExpression(r)}`)
         .join("\n") + "\n",
     );
     break;

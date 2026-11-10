@@ -15,7 +15,7 @@ import {
   VAR_NAMES,
   type Theme,
 } from "../src/index.ts";
-import { generateBridge, ROLE_DESCRIPTIONS, ROLES } from "../src/bridge.ts";
+import { generateBridge, ROLE_DESCRIPTIONS, roleExpression, ROLES } from "../src/bridge.ts";
 import { parseColor } from "../src/color.ts";
 
 const DEFAULT_THEME = "serika_dark";

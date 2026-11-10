@@ -45,7 +45,7 @@ export function parseColor(input: string): RGBA | null {
     return { r: n(0), g: n(2), b: n(4), a: hex.length === 8 ? n(6) : 1 };
   }
 
-  const fn = /^(rgba?|hsla?)\(([^)]*)\)$/.exec(s);
+  const fn = /^(rgba?|hsla?|oklch|oklab)\(([^)]*)\)$/.exec(s);
   if (!fn) return null;
   const parts = fn[2]!
     .replace(/\//g, " ")
@@ -58,12 +58,35 @@ export function parseColor(input: string): RGBA | null {
     return p.endsWith("%") ? parseFloat(p) / 100 : parseFloat(p);
   };
 
-  if (fn[1]!.startsWith("rgb")) {
+  const kind = fn[1]!;
+  if (kind.startsWith("rgb")) {
     const ch = (p: string) =>
       p.endsWith("%") ? parseFloat(p) / 100 : parseFloat(p) / 255;
     const [r, g, b] = parts.slice(0, 3).map(ch) as [number, number, number];
     if ([r, g, b].some(Number.isNaN)) return null;
     return { r: clamp01(r), g: clamp01(g), b: clamp01(b), a: clamp01(alpha(parts[3])) };
+  }
+
+  if (kind === "oklch") {
+    const l = parts[0]!.endsWith("%") ? parseFloat(parts[0]!) / 100 : parseFloat(parts[0]!);
+    const c = parts[1]!.endsWith("%") ? (parseFloat(parts[1]!) / 100) * 0.4 : parseFloat(parts[1]!);
+    const hRaw = parts[2]!;
+    const h = hRaw === "none" ? 0 : hRaw.endsWith("turn") ? parseFloat(hRaw) * 360 : hRaw.endsWith("rad") ? (parseFloat(hRaw) * 180) / Math.PI : parseFloat(hRaw);
+    if ([l, c, h].some(Number.isNaN)) return null;
+    const rgb = oklchToRgb({ l, c, h: ((h % 360) + 360) % 360 });
+    return { r: clamp01(rgb.r), g: clamp01(rgb.g), b: clamp01(rgb.b), a: clamp01(alpha(parts[3])) };
+  }
+
+  if (kind === "oklab") {
+    const l = parts[0]!.endsWith("%") ? parseFloat(parts[0]!) / 100 : parseFloat(parts[0]!);
+    const a = parts[1]!.endsWith("%") ? (parseFloat(parts[1]!) / 100) * 0.4 : parseFloat(parts[1]!);
+    const b = parts[2]!.endsWith("%") ? (parseFloat(parts[2]!) / 100) * 0.4 : parseFloat(parts[2]!);
+    if ([l, a, b].some(Number.isNaN)) return null;
+    const c = Math.hypot(a, b);
+    let h = (Math.atan2(b, a) * 180) / Math.PI;
+    if (h < 0) h += 360;
+    const rgb = oklchToRgb({ l, c, h });
+    return { r: clamp01(rgb.r), g: clamp01(rgb.g), b: clamp01(rgb.b), a: clamp01(alpha(parts[3])) };
   }
 
   const h = parseFloat(parts[0]!);

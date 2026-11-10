@@ -375,7 +375,17 @@ export function inferRoles(
       skipped.push({ name: prop.name, value: prop.value, reason: "alias of another variable (follows automatically)" });
       continue;
     }
-    const rgba = parseColor(resolveValue(prop.value, byName));
+    const tokens = tokenize(prop.name);
+    if (tokens.some((t) => t === "shadow" || t === "drop") && !options.overrides?.[prop.name]) {
+      skipped.push({ name: prop.name, value: prop.value, reason: "shadow token (left untouched)" });
+      continue;
+    }
+    const resolved = resolveValue(prop.value, byName).trim();
+    if (/^\d+(?:\.\d+)?(?:deg)?\s+\d+(?:\.\d+)?%\s+\d+(?:\.\d+)?%(?:\s*\/\s*[\d.%]+)?$/.test(resolved) && !options.overrides?.[prop.name]) {
+      skipped.push({ name: prop.name, value: prop.value, reason: "bare HSL channels (Tailwind v3 style); wrap in hsl() or override" });
+      continue;
+    }
+    const rgba = parseColor(resolved);
     if (!rgba) {
       if (!options.overrides?.[prop.name]) {
         skipped.push({ name: prop.name, value: prop.value, reason: "not a color" });
@@ -390,17 +400,29 @@ export function inferRoles(
     pickReference(colorProps, W.bg, new Set([...W.surface, ...W.subtle, ...W.on, ...W.selection, ...W.text]), /^background/) ??
     colorProps.find((p) => p.usedBy.some((u) => /^background/.test(u)));
   const fgRef =
-    pickReference(colorProps, W.text, new Set([...W.muted, ...W.faint, ...W.on, ...W.selection, ...W.bg]), /^color$/);
+    pickReference(colorProps, W.text, new Set([...W.muted, ...W.faint, ...W.on, ...W.selection, ...W.bg, ...W.surface, ...W.accent, ...W.danger]), /^color$/);
   const bgRGBA = (bgRef && colors.find((c) => c.prop === bgRef)?.rgba) ?? parseColor("#ffffff")!;
   const bgL = rgbToOklch(bgRGBA).l;
   const fgL = fgRef ? rgbToOklch(colors.find((c) => c.prop === fgRef)!.rgba).l : bgL > 0.5 ? 0 : 1;
   const span = Math.abs(fgL - bgL) < 0.2 ? (bgL > 0.5 ? -bgL : 1 - bgL) : fgL - bgL;
 
-  // Series detection: --foo-1, --foo-2, --foo-3 … with at least 3 members.
-  const seriesCount = new Map<string, number>();
+  // Series detection: 1-based numbered series (--foo-1, --foo-2, --foo-3 …),
+  // excluding Tailwind-style lightness shade ramps (--blue-50, --blue-500, …).
+  const seriesMembers = new Map<string, number[]>();
   for (const p of colorProps) {
     const m = /^(.*?)-?(\d+)$/.exec(p.name);
-    if (m) seriesCount.set(m[1]!, (seriesCount.get(m[1]!) ?? 0) + 1);
+    if (!m) continue;
+    const n = Number(m[2]);
+    const list = seriesMembers.get(m[1]!) ?? [];
+    list.push(n);
+    seriesMembers.set(m[1]!, list);
+  }
+  const categoricalPrefixes = new Set<string>();
+  for (const [prefix, nums] of seriesMembers) {
+    const looksLikeShadeScale = nums.some((n) => n >= 50 && n % 50 === 0);
+    if (nums.length >= 3 && !looksLikeShadeScale && Math.max(...nums) <= 16) {
+      categoricalPrefixes.add(prefix);
+    }
   }
 
   const mappings: Mapping[] = [];
@@ -415,7 +437,7 @@ export function inferRoles(
       lch,
       tier: (lch.l - bgL) / span,
       chromatic: lch.c >= 0.06,
-      seriesIndex: sm && (seriesCount.get(sm[1]!) ?? 0) >= 3 ? Number(sm[2]) : null,
+      seriesIndex: sm && categoricalPrefixes.has(sm[1]!) ? Number(sm[2]) : null,
     };
 
     if (override) {
@@ -469,23 +491,43 @@ function classify(
   const tSurface = has(W.surface);
   const tBorder = has(W.border);
   const tOn = has(W.on);
-  // "plain" = nothing but the role word (optionally with "color"), e.g. --bg, --text-color
-  const plain = f.tokens.filter((t) => t !== "color").length === 1;
+  const tAccent = has(W.accent);
+  const tDanger = has(W.danger);
+  // "plain" = nothing but the role word (optionally with "color"/"default"), e.g. --bg, --text-color
+  const plain = f.tokens.filter((t) => t !== "color" && t !== "default").length === 1;
+
+  // Detect compound text-on-X patterns:
+  //   - shadcn/Primer style: --primary-foreground, --button-primary-fgColor, --card-foreground
+  //   - prefix style: --on-primary, --on-accent, --contrast-text
+  const fgIdx = f.tokens.findLastIndex((t) => W.text.has(t));
+  const fillTriggerIdx = f.tokens.findIndex((t) => W.accent.has(t) || W.danger.has(t) || W.surface.has(t));
+  const isForegroundOnFill = fgIdx > 0 && fillTriggerIdx !== -1 && fillTriggerIdx < fgIdx && !tBg;
 
   if (isBgRef) add("bg", 4, "page background reference");
   if (isFgRef) add("fg", 4, "primary text reference");
 
-  if (tOn && (has(W.accent) || has(W.danger))) {
-    add("onAccent", 5, `"${tOn}" + accent name`);
+  if (tOn && (tAccent || tDanger)) {
+    add("onAccent", 5, `"${tOn}" + "${tAccent ?? tDanger}"`);
+  } else if (isForegroundOnFill && (tAccent || tDanger)) {
+    // Distinguish "--primary-foreground" (text ON a solid primary fill, lightness near bg)
+    // from "--fgColor-accent" (accent-colored text, where fg comes first).
+    if (Math.abs(f.tier) < 0.35 || !f.chromatic) {
+      add("onAccent", 5, `text on "${tAccent ?? tDanger}" surface`);
+    } else {
+      add(tDanger ? "danger" : "accent", 4, `"${tDanger ?? tAccent}" text`);
+    }
+  } else if (isForegroundOnFill && tSurface) {
+    add("fg", 4, `text on "${tSurface}" surface`);
   }
-  if (tBg || tSurface) {
+
+  if ((tBg || tSurface) && !isForegroundOnFill && !(tText && !tBg)) {
     addFamily("bgFamily", 2, `name "${tBg ?? tSurface}"`);
     const sub = has(W.subtle);
     if (sub) add("surfaceAlt", 2, `"${sub}"`);
     else if (tSurface) add("surface", 2, `"${tSurface}"`);
     if (!tSurface && !sub && plain) add("bg", 1, "plain background name");
   }
-  if (tText && !tBg) {
+  if (tText && !tBg && !isForegroundOnFill && !(tAccent && fgIdx < f.tokens.findIndex((t) => W.accent.has(t))) && !(tDanger && fgIdx < f.tokens.findIndex((t) => W.danger.has(t)))) {
     addFamily("fgFamily", 2, `name "${tText}"`);
     const faint = has(W.faint);
     const muted = has(W.muted);
@@ -497,23 +539,25 @@ function classify(
     const faint = has(W.faint);
     const muted = has(W.muted);
     if (faint) add("fgFaint", 1.5, `"${faint}"`);
-    else if (muted && !has(W.border) && !has(W.accent)) add("fgMuted", 1.5, `"${muted}"`);
+    else if (muted && !tBorder && !tAccent) {
+      // Bare "--muted" or "--secondary": let lightness decide whether it's a subtle bg or muted text.
+      if (Math.abs(f.tier) < 0.2) add("surfaceAlt", 2, `"${muted}" near background lightness`);
+      else add("fgMuted", 2, `"${muted}"`);
+    }
   }
   if (tBorder) {
     addFamily("borderFamily", 3, `name "${tBorder}"`);
     const strong = has(W.strong);
     if (strong) add("borderStrong", 2, `"${strong}"`);
   }
-  const tAccent = has(W.accent);
-  if (tAccent && !tOn) add("accent", 4, `name "${tAccent}"`);
+  if (tAccent && !tOn && !isForegroundOnFill) add("accent", 4, `name "${tAccent}"`);
   const tCaret = has(W.caret);
   if (tCaret) add("caret", 4, `name "${tCaret}"`);
   const tSel = has(W.selection);
   if (tSel) add("selection", 5, `name "${tSel}"`);
   const tBackdrop = has(W.backdrop);
   if (tBackdrop) add("backdrop", f.rgba.a < 1 ? 5 : 3, `name "${tBackdrop}"`);
-  const tDanger = has(W.danger);
-  if (tDanger && !tOn) add("danger", 5, `name "${tDanger}"`);
+  if (tDanger && !tOn && !isForegroundOnFill) add("danger", 5, `name "${tDanger}"`);
   if (f.seriesIndex !== null && (f.chromatic || has(W.categorical) || tAccent)) {
     add("categorical", 6, `numbered series member (#${f.seriesIndex})`);
   } else if (has(W.categorical) && f.chromatic) {
@@ -524,7 +568,7 @@ function classify(
   if (prop.usedBy.some((u) => /^background/.test(u))) addFamily("bgFamily", 0.75, "used as background");
   if (prop.usedBy.some((u) => u === "color" || u === "fill")) addFamily("fgFamily", 0.75, "used as text color");
   if (prop.usedBy.some((u) => /^(border|outline)/.test(u))) addFamily("borderFamily", 0.75, "used in borders");
-  if (f.rgba.a < 1 && f.rgba.a > 0) add("backdrop", 1, "translucent");
+  if (f.rgba.a < 1 && f.rgba.a > 0 && tBackdrop) add("backdrop", 1, "translucent");
 
   // --- value signals ------------------------------------------------------
   const neutralWeight = f.chromatic ? 0.6 : 1.6;

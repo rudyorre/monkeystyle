@@ -112,3 +112,40 @@ test("modifiers beat base words, and sunken surfaces count as surfaces", () => {
   assert.equal(role("--surface"), "surface");
   assert.equal(role("--surface-alt"), "surfaceAlt");
 });
+
+test("handles shadcn/Tailwind v4 oklch(), compound *-foreground, shadows, and shade ramps", () => {
+  const { mappings, skipped } = generateBridge(`:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+    --fgColor-accent: #0969da;
+    --shadow: rgba(0, 0, 0, 0.12);
+    --blue-500: #3b82f6;
+    --blue-600: #2563eb;
+    --blue-700: #1d4ed8;
+    --legacy-hsl: 222.2 84% 4.9%;
+  }`);
+  const role = (name: string) => mappings.find((m) => m.name === name)?.role;
+  assert.equal(role("--background"), "bg");
+  assert.equal(role("--foreground"), "fg");
+  assert.equal(role("--card"), "surface");
+  assert.equal(role("--card-foreground"), "fg");
+  assert.equal(role("--primary"), "accent");
+  assert.equal(role("--primary-foreground"), "onAccent");
+  assert.equal(role("--muted"), "surfaceAlt");
+  assert.equal(role("--muted-foreground"), "fgMuted");
+  assert.equal(role("--destructive"), "danger");
+  assert.equal(role("--destructive-foreground"), "onAccent");
+  assert.equal(role("--fgColor-accent"), "accent");
+  assert.notEqual(role("--blue-500"), "categorical");
+  assert.ok(skipped.some((s) => s.name === "--shadow" && s.reason.includes("shadow")));
+  assert.ok(skipped.some((s) => s.name === "--legacy-hsl" && s.reason.includes("bare HSL")));
+});
+
