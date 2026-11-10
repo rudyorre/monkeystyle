@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>monkeystyle: Monkeytype's themes for any website</title>
+    <meta
+      name="description"
+      content="Bring all 187 Monkeytype themes to your site. A tiny framework-agnostic runtime, a deterministic CSS translation layer, and a CLI. No LLM required."
+    />
+    <meta property="og:title" content="monkeystyle" />
+    <meta property="og:description" content="Monkeytype's themes, on any website." />
+    <meta property="og:url" content="https://monkeystyle.rudbase.com" />
+    <meta name="theme-color" content="#323437" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <!--monkeystyle:head-->
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="logo" href="#top" id="logo" aria-label="monkeystyle home">
+          <span class="logo__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 20" width="28" height="18"><rect x="1" y="1" width="30" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="6" width="4" height="8" rx="1" fill="var(--text)"/><rect x="14" y="6" width="4" height="8" rx="1" fill="var(--text)"/><rect x="21.5" y="4.5" width="2.5" height="11" rx="1.25" fill="var(--caret)"/></svg>
+          </span>
+          <span class="logo__word"><span class="logo__dim">monkey</span>style</span>
+        </a>
+        <nav class="nav" aria-label="Sections">
+          <a href="#how">how</a>
+          <a href="#start">start</a>
+          <a href="#bridge">bridge</a>
+          <a href="#api">api</a>
+          <a href="#themes">themes</a>
+        </nav>
+        <button class="theme-chip" id="theme-chip" type="button" aria-haspopup="dialog" title="Change theme (⌘K)">
+          <span class="theme-chip__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-chip__name" id="theme-chip-name">serika dark</span>
+          <kbd class="theme-chip__kbd">⌘K</kbd>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <h1 class="hero__title">Monkeytype's themes,<br />on any website.</h1>
+
+        <p class="typing" id="typing" aria-label="monkeystyle maps your css tokens onto every monkeytype theme"></p>
+
+        <p class="hero__lede">
+          monkeystyle bundles all <strong id="theme-count">187</strong> palettes from
+          <a href="https://monkeytype.com" target="_blank" rel="noopener">monkeytype</a> and translates them onto your
+          existing CSS variables. One small rule, one function call. No framework, no build plugin, no LLM.
+        </p>
+
+        <div class="hero__actions">
+          <button class="btn btn--primary" id="open-palette" type="button">Browse themes <kbd>⌘K</kbd></button>
+          <button class="btn" id="random-theme" type="button">Random theme</button>
+          <button class="install" id="install" type="button" data-copy="npm i monkeystyle" aria-label="Copy install command">
+            <span class="install__prompt">$</span> npm i monkeystyle <span class="install__copy">copy</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section" id="how" aria-labelledby="how-title">
+        <h2 class="section__title" id="how-title"><span class="section__num">01</span>How it works</h2>
+
+        <ol class="steps">
+          <li class="step">
+            <h3>Every theme is ten colors.</h3>
+            <p>
+              Monkeytype describes each theme with the same ten semantic colors. monkeystyle exposes them as
+              <code>--mt-*</code> custom properties and derives eight on-palette accents for charts, tags and syntax.
+            </p>
+            <div class="palette" id="palette" aria-live="polite"></div>
+            <div class="accents" id="accents" aria-label="Derived accents"></div>
+          </li>
+          <li class="step">
+            <h3>A bridge maps your tokens once.</h3>
+            <p>
+              The CLI reads your stylesheet, works out what each variable is for (page background, muted text,
+              border, accent…) and writes one rule that re-points them at the active theme. It's deterministic and
+              explainable, and you can override anything. <a href="#bridge">Try it below.</a>
+            </p>
+          </li>
+          <li class="step">
+            <h3>Switch at runtime.</h3>
+            <p>
+              <code>applyTheme("dracula")</code> sets the variables, <code>color-scheme</code>, and remembers the choice.
+              A ~300-byte head script restores it before first paint, so there's no flash.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="start" aria-labelledby="start-title">
+        <h2 class="section__title" id="start-title"><span class="section__num">02</span>Quick start</h2>
+
+        <div class="doc">
+          <h3>1. Install</h3>
+          <pre class="code" data-lang="bash"><code>npm i monkeystyle</code></pre>
+
+          <h3>2. Generate your bridge</h3>
+          <p>Point the CLI at the stylesheet(s) that define your color variables.</p>
+          <pre class="code" data-lang="bash"><code>npx monkeystyle bridge src/styles/global.css --out src/styles/monkeystyle.css</code></pre>
+          <p>Import the output after your own tokens. It only applies while a theme is active (<code>[data-mt]</code>), so your site looks unchanged until someone picks one.</p>
+
+          <h3>3. Prevent the flash</h3>
+          <p>Inline this in <code>&lt;head&gt;</code>. It's the output of <code>headScript()</code> and has no dependencies.</p>
+          <pre class="code" data-lang="html"><code id="head-script-code"></code></pre>
+
+          <h3>4. Let people pick</h3>
+          <pre class="code" data-lang="js"><code>import { applyTheme, clearTheme, listThemes } from "monkeystyle";
+
+// wire into your command menu, a select, an easter egg…
+for (const t of listThemes({ scheme: "dark" })) {
+  menu.add(t.name, () =&gt; applyTheme(t.name));
+}
+menu.add("default", () =&gt; clearTheme());</code></pre>
+        </div>
+      </section>
+
+      <section class="section" id="bridge" aria-labelledby="bridge-title">
+        <h2 class="section__title" id="bridge-title"><span class="section__num">03</span>The bridge</h2>
+        <p class="section__lede">
+          Paste the CSS that defines your variables. Each variable is scored on its name, its lightness relative to
+          your page background and text, its saturation, and how your rules use it. Everything runs in your browser.
+        </p>
+
+        <div class="bridge">
+          <label class="bridge__pane">
+            <span class="bridge__label">your css</span>
+            <textarea id="bridge-input" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          </label>
+          <div class="bridge__pane">
+            <span class="bridge__label">generated bridge <button class="link-btn" id="copy-bridge" type="button">copy</button></span>
+            <pre class="code code--output" data-lang="css"><code id="bridge-output"></code></pre>
+          </div>
+        </div>
+
+        <div class="mapping bridge-preview" id="bridge-preview">
+          <style id="bridge-preview-style"></style>
+          <table class="mapping__table">
+            <thead>
+              <tr>
+                <th scope="col">variable</th>
+                <th scope="col">yours → themed</th>
+                <th scope="col">role</th>
+                <th scope="col">confidence</th>
+                <th scope="col" class="mapping__why">why</th>
+              </tr>
+            </thead>
+            <tbody id="bridge-rows"></tbody>
+          </table>
+          <p class="mapping__notes" id="bridge-notes"></p>
+        </div>
+      </section>
+
+      <section class="section" id="api" aria-labelledby="api-title">
+        <h2 class="section__title" id="api-title"><span class="section__num">04</span>API</h2>
+
+        <div class="doc">
+          <h3><code>monkeystyle</code> runtime</h3>
+          <dl class="api">
+            <dt><code>applyTheme(name | theme, opts?)</code></dt>
+            <dd>Sets <code>--mt-*</code> on <code>&lt;html&gt;</code>, <code>data-mt</code>, <code>color-scheme</code>, saves to localStorage and fires <code>monkeystyle:change</code>. Options: <code>root</code>, <code>attribute</code>, <code>storageKey</code> (or <code>false</code>).</dd>
+            <dt><code>clearTheme(opts?)</code></dt>
+            <dd>Back to your site's native styles.</dd>
+            <dt><code>listThemes({ scheme?, query? })</code> · <code>getTheme(name)</code> · <code>randomTheme()</code></dt>
+            <dd>Theme objects: the ten colors plus <code>name</code>, <code>scheme</code> and harvested <code>extras</code>.</dd>
+            <dt><code>getActiveTheme()</code> · <code>getSavedTheme()</code></dt>
+            <dd>Current / persisted theme name, or <code>null</code>.</dd>
+            <dt><code>themeVars(theme, opts?)</code> · <code>themeCSS(theme, selector?)</code></dt>
+            <dd>Resolve a theme (or your own palette) to variables or a CSS rule, for SSR or static builds. <code>{ monkeytypeNames: true }</code> also emits <code>--bg-color</code>, <code>--main-color</code>, …</dd>
+            <dt><code>headScript(opts?)</code></dt>
+            <dd>The inline no-flash snippet as a string.</dd>
+          </dl>
+
+          <h3><code>monkeystyle/bridge</code> translation layer</h3>
+          <dl class="api">
+            <dt><code>generateBridge(css, { selector?, overrides?, ignore? })</code></dt>
+            <dd>Returns <code>{ css, mappings, skipped, hardcoded }</code>. Each mapping has a <code>role</code>, <code>confidence</code> and a human-readable <code>reason</code>.</dd>
+            <dt><code>scanCSS(css)</code> · <code>inferRoles(props)</code> · <code>renderBridge(mappings)</code></dt>
+            <dd>The same pipeline, one step at a time.</dd>
+          </dl>
+
+          <h3>Variables</h3>
+          <div class="vars" id="vars-table"></div>
+
+          <h3>Roles</h3>
+          <div class="roles" id="roles-table"></div>
+        </div>
+      </section>
+
+      <section class="section" id="cli" aria-labelledby="cli-title">
+        <h2 class="section__title" id="cli-title"><span class="section__num">05</span>CLI &amp; agents</h2>
+        <div class="doc">
+          <p>Non-interactive and deterministic, so it gives the same output for humans, CI and coding agents. Every command that reports data accepts <code>--json</code>.</p>
+          <pre class="code" data-lang="bash"><code>npx monkeystyle bridge &lt;css files…&gt; [--out file] [--json] [--selector S]
+npx monkeystyle list [--scheme dark|light] [--json]
+npx monkeystyle css serika_dark [--selector S] [--monkeytype-names]
+npx monkeystyle head-script
+npx monkeystyle roles</code></pre>
+          <p>Overrides live in <code>monkeystyle.config.json</code>, which the CLI picks up automatically:</p>
+          <pre class="code" data-lang="json"><code>{
+  "selector": "html:root[data-mt]",
+  "overrides": { "--glyph-ink": "fgMuted", "--brand": { "expression": "var(--mt-caret)" } },
+  "ignore": ["--shadow-color"]
+}</code></pre>
+        </div>
+      </section>
+
+      <section class="section" id="themes" aria-labelledby="themes-title">
+        <h2 class="section__title" id="themes-title"><span class="section__num">06</span>Themes</h2>
+        <div class="gallery-controls">
+          <input class="search" id="gallery-search" type="search" placeholder="search themes…" aria-label="Search themes" />
+          <div class="segmented" role="radiogroup" aria-label="Filter by scheme">
+            <button type="button" role="radio" aria-checked="true" data-scheme="">all</button>
+            <button type="button" role="radio" aria-checked="false" data-scheme="dark">dark</button>
+            <button type="button" role="radio" aria-checked="false" data-scheme="light">light</button>
+          </div>
+          <span class="gallery-count" id="gallery-count"></span>
+        </div>
+        <div class="gallery" id="gallery"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Every palette is from <a href="https://monkeytype.com" target="_blank" rel="noopener">monkeytype</a>, created by
+        Jack "Miodec" and designed by its community, and used with permission. Go type something.
+      </p>
+      <p class="footer__meta">
+        <a href="https://github.com/rudyorre/monkeystyle" target="_blank" rel="noopener">github</a> ·
+        MIT · themes from <a id="upstream-link" href="https://github.com/monkeytypegame/monkeytype" target="_blank" rel="noopener">monkeytype</a>
+      </p>
+    </footer>
+
+    <dialog class="palette-dialog" id="palette-dialog" aria-label="Choose a theme">
+      <div class="cmd">
+        <div class="cmd__search">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="cmd-input" type="text" placeholder="theme…" autocomplete="off" spellcheck="false" aria-controls="cmd-list" />
+          <kbd>esc</kbd>
+        </div>
+        <ul class="cmd__list" id="cmd-list" role="listbox"></ul>
+        <div class="cmd__hint"><span><kbd>↑</kbd><kbd>↓</kbd> preview</span><span><kbd>↵</kbd> apply</span><span><kbd>esc</kbd> revert</span></div>
+      </div>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

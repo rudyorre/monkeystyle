@@ -1,0 +1,47 @@
+/* A typical light/dark token setup (modeled on rudyorre.com's global.css). */
+:root {
+  --font-sans: -apple-system, "Inter", sans-serif;
+  --font-body: var(--font-sans);
+
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f1f1f0;
+  --fg: #141413;
+  --fg-muted: #575653;
+  --fg-faint: #878580;
+  --border: #e4e3df;
+  --border-strong: #c8c6c0;
+  --accent: #141413;
+  --selection-bg: #e4e3df;
+  --backdrop: rgba(15, 15, 14, 0.45);
+
+  --glyph-bg: #f3f2ee;
+  --glyph-grid: #e7e5df;
+  --glyph-ink: #6e6c66;
+  --glyph-accent-1: #2b6cb0;
+  --glyph-accent-2: #0f766e;
+  --glyph-accent-3: #b45309;
+  --glyph-accent-4: #9f1239;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10100e;
+    --fg: #ecebe6;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+a {
+  color: var(--accent);
+}

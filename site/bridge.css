@@ -1,0 +1,22 @@
+/* monkeystyle bridge: maps this site's tokens onto the active Monkeytype theme. */
+:root[data-mt] {
+  color-scheme: var(--mt-scheme);
+  --bg: var(--mt-bg);                                                          /* bg 100% */
+  --surface: color-mix(in oklch, var(--mt-sub-alt) 55%, var(--mt-bg));         /* surface 92% */
+  --surface-alt: var(--mt-sub-alt);                                            /* surfaceAlt 91% */
+  --text: var(--mt-text);                                                      /* fg 100% */
+  --text-muted: var(--mt-sub);                                                 /* fgMuted 88% */
+  --text-faint: color-mix(in oklch, var(--mt-sub) 65%, var(--mt-bg));          /* fgFaint 92% */
+  --border: color-mix(in oklch, var(--mt-sub) 30%, var(--mt-sub-alt));         /* border 72% */
+  --border-strong: color-mix(in oklch, var(--mt-sub) 60%, var(--mt-sub-alt));  /* borderStrong 73% */
+  --accent: var(--mt-main);                                                    /* accent 100% */
+  --on-accent: var(--mt-on-main);                                              /* onAccent 98% */
+  --caret: var(--mt-caret);                                                    /* caret 97% */
+  --danger: var(--mt-error);                                                   /* danger 100% */
+  --selection-bg: color-mix(in oklch, var(--mt-main) 30%, var(--mt-bg));       /* selection 97% */
+  --backdrop: color-mix(in srgb, var(--mt-bg) 70%, transparent);               /* backdrop 99% */
+  --syntax-1: var(--mt-accent-1);                                              /* categorical 100% */
+  --syntax-2: var(--mt-accent-2);                                              /* categorical 99% */
+  --syntax-3: var(--mt-accent-3);                                              /* categorical 100% */
+  --syntax-4: var(--mt-accent-4);                                              /* categorical 100% */
+}

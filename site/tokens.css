@@ -1,0 +1,26 @@
+/*
+ * The docs site's own design tokens. Native values are serika dark.
+ * site/bridge.css is GENERATED from this file by the monkeystyle CLI:
+ *   npm run site:bridge
+ */
+:root {
+  --bg: #323437;
+  --surface: #2f3134;
+  --surface-alt: #2c2e31;
+  --text: #d1d0c5;
+  --text-muted: #646669;
+  --text-faint: #505255;
+  --border: #3a3c3f;
+  --border-strong: #4b4d50;
+  --accent: #e2b714;
+  --on-accent: #323437;
+  --caret: #e2b714;
+  --danger: #ca4754;
+  --selection-bg: #5a4f24;
+  --backdrop: rgba(30, 31, 33, 0.7);
+
+  --syntax-1: #e2b714;
+  --syntax-2: #7fb6d4;
+  --syntax-3: #9fca7f;
+  --syntax-4: #ca4754;
+}

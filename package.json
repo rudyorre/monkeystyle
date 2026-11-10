@@ -1,0 +1,66 @@
+{
+  "name": "monkeystyle",
+  "version": "0.1.0",
+  "description": "Monkeytype's themes for any website. Framework-agnostic runtime, a deterministic CSS translation layer, and a CLI.",
+  "license": "MIT",
+  "author": "Rudy Orre",
+  "homepage": "https://monkeystyle.rudbase.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rudyorre/monkeystyle.git"
+  },
+  "keywords": [
+    "monkeytype",
+    "themes",
+    "css-variables",
+    "color-scheme",
+    "theming"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./bridge": {
+      "types": "./dist/bridge.d.ts",
+      "default": "./dist/bridge.js"
+    },
+    "./color": {
+      "types": "./dist/color.d.ts",
+      "default": "./dist/color.js"
+    },
+    "./themes": {
+      "types": "./dist/themes.data.d.ts",
+      "default": "./dist/themes.data.js"
+    }
+  },
+  "bin": {
+    "monkeystyle": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "THEMES.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p site/tsconfig.json --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "import-themes": "node scripts/import-themes.ts",
+    "site:bridge": "node src/cli.ts bridge site/tokens.css --selector \":root[data-mt]\" --out site/bridge.css",
+    "dev": "vite --config site/vite.config.ts",
+    "build:site": "vite build --config site/vite.config.ts",
+    "preview": "vite preview --config site/vite.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7"
+  }
+}
