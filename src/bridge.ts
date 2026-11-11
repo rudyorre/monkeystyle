@@ -500,7 +500,9 @@ function classify(
   //   - shadcn/Primer style: --primary-foreground, --button-primary-fgColor, --card-foreground
   //   - prefix style: --on-primary, --on-accent, --contrast-text
   const fgIdx = f.tokens.findLastIndex((t) => W.text.has(t));
-  const fillTriggerIdx = f.tokens.findIndex((t) => W.accent.has(t) || W.danger.has(t) || W.surface.has(t));
+  const fillTriggerIdx = f.tokens.findIndex(
+    (t) => (W.accent.has(t) || W.danger.has(t) || W.surface.has(t)) && !W.muted.has(t) && !W.faint.has(t),
+  );
   const isForegroundOnFill = fgIdx > 0 && fillTriggerIdx !== -1 && fillTriggerIdx < fgIdx && !tBg;
 
   if (isBgRef) add("bg", 4, "page background reference");

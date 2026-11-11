@@ -13,6 +13,7 @@ import {
   themeVars,
   UPSTREAM,
   VAR_NAMES,
+  VERSION,
   type Theme,
 } from "../src/index.ts";
 import { generateBridge, ROLE_DESCRIPTIONS, roleExpression, ROLES } from "../src/bridge.ts";
@@ -422,6 +423,10 @@ function initChrome() {
     const section = document.getElementById(id);
     if (section) observer.observe(section);
   }
+
+  const vChip = $<HTMLAnchorElement>("#version-chip");
+  vChip.textContent = `v${VERSION}`;
+  vChip.href = `https://github.com/rudyorre/monkeystyle/releases/tag/v${VERSION}`;
 
   $("#theme-count").textContent = String(listThemes().length);
   $<HTMLAnchorElement>("#upstream-link").href = `https://github.com/${UPSTREAM.repo}/tree/${UPSTREAM.sha}`;

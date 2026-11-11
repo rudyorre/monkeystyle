@@ -126,6 +126,12 @@ strong {
   gap: 1.5rem;
 }
 
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .logo {
   display: inline-flex;
   align-items: center;
@@ -148,6 +154,26 @@ strong {
 }
 .logo__dim {
   color: var(--text-muted);
+}
+
+.version-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+}
+.version-chip:hover {
+  color: var(--text);
+  background: color-mix(in oklch, var(--surface-alt) 70%, var(--text-muted));
 }
 
 .nav {

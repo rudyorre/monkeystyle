@@ -19,6 +19,9 @@ export type { Palette, PaletteKey, Theme, ThemeRecord, Scheme } from "./types.ts
 export type { ThemeName } from "./themes.data.ts";
 export { themes, UPSTREAM, deriveAccents, ACCENT_COUNT, PALETTE_KEYS };
 
+/** Current monkeystyle package version. */
+export const VERSION = "0.1.0";
+
 /** Upstream palette key -> monkeystyle CSS variable. */
 export const VAR_NAMES: Record<PaletteKey, string> = {
   bg: "--mt-bg",
@@ -181,16 +184,18 @@ export function clearTheme(options: ApplyOptions = {}): void {
   root.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: null, bubbles: true }));
 }
 
-/** Name of the currently applied theme, if any. */
+/** Name of the currently applied theme, if any. Safe to call during SSR (returns `null`). */
 export function getActiveTheme(options: Pick<ApplyOptions, "root" | "attribute"> = {}): ThemeName | null {
-  const root = options.root ?? document.documentElement;
+  const root = options.root ?? (typeof document !== "undefined" ? document.documentElement : null);
+  if (!root) return null;
   const name = root.getAttribute(options.attribute ?? DEFAULT_ATTRIBUTE);
   return name && isThemeName(name) ? name : null;
 }
 
-/** Name of the theme saved in localStorage, if any. */
+/** Name of the theme saved in localStorage, if any. Safe to call during SSR (returns `null`). */
 export function getSavedTheme(storageKey: string = DEFAULT_STORAGE_KEY): ThemeName | null {
   try {
+    if (typeof localStorage === "undefined") return null;
     const saved = JSON.parse(localStorage.getItem(storageKey) ?? "null") as Saved | null;
     return saved && isThemeName(saved.name) ? saved.name : null;
   } catch {

@@ -9,6 +9,12 @@
     "type": "git",
     "url": "git+https://github.com/rudyorre/monkeystyle.git"
   },
+  "bugs": {
+    "url": "https://github.com/rudyorre/monkeystyle/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "monkeytype",
     "themes",
@@ -49,9 +55,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p site/tsconfig.json --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "import-themes": "node scripts/import-themes.ts",
     "site:bridge": "node src/cli.ts bridge site/tokens.css --selector \":root[data-mt]\" --out site/bridge.css",
     "dev": "vite --config site/vite.config.ts",

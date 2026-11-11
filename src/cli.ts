@@ -6,9 +6,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { generateBridge, ROLE_DESCRIPTIONS, roleExpression, type BridgeOptions, type Role } from "./bridge.ts";
-import { getTheme, headScript, listThemes, themeCSS, UPSTREAM } from "./index.ts";
+import { getTheme, headScript, listThemes, themeCSS, UPSTREAM, VERSION } from "./index.ts";
 
-const HELP = `monkeystyle: Monkeytype themes for any website
+const HELP = `monkeystyle v${VERSION}: Monkeytype themes for any website
 
 Usage:
   monkeystyle bridge <css files...> [--out bridge.css] [--json] [--selector S] [--config F] [--no-comments]
@@ -22,6 +22,8 @@ Usage:
       Print the inline <head> script that restores the saved theme without a flash.
   monkeystyle roles
       Describe every role the bridge can assign.
+  monkeystyle --version | -v
+      Print monkeystyle version and upstream theme snapshot.
 
 Config: ./monkeystyle.config.json is read automatically by "bridge" if present:
   { "selector": "html:root[data-mt]", "overrides": { "--glyph-ink": "fgMuted" }, "ignore": ["--shadow"] }
@@ -32,9 +34,9 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-const [command, ...rest] = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
 const { values, positionals } = parseArgs({
-  args: rest,
+  args: rawArgs,
   allowPositionals: true,
   options: {
     out: { type: "string", short: "o" },
@@ -44,13 +46,26 @@ const { values, positionals } = parseArgs({
     "no-comments": { type: "boolean" },
     scheme: { type: "string" },
     "monkeytype-names": { type: "boolean" },
+    version: { type: "boolean", short: "v" },
     help: { type: "boolean", short: "h" },
   },
 });
 
+const [command, ...rest] = positionals;
+
+if (values.version || command === "version") {
+  process.stdout.write(`monkeystyle v${VERSION} (themes from ${UPSTREAM.repo}@${UPSTREAM.sha.slice(0, 7)}, ${UPSTREAM.importedAt})\n`);
+  process.exit(0);
+}
+
+if (values.help || !command || command === "help") {
+  process.stdout.write(HELP);
+  process.exit(0);
+}
+
 switch (command) {
   case "bridge": {
-    if (!positionals.length) fail("bridge needs at least one CSS file");
+    if (!rest.length) fail("bridge needs at least one CSS file");
     const configPath = values.config ?? "monkeystyle.config.json";
     let config: BridgeOptions = {};
     if (existsSync(configPath)) {
@@ -58,7 +73,7 @@ switch (command) {
     } else if (values.config) {
       fail(`config not found: ${values.config}`);
     }
-    const sources = positionals.map((file) => {
+    const sources = rest.map((file) => {
       if (!existsSync(file)) fail(`file not found: ${file}`);
       return readFileSync(file, "utf8");
     });
@@ -90,8 +105,8 @@ switch (command) {
     break;
   }
   case "css": {
-    const theme = positionals[0] && getTheme(positionals[0]);
-    if (!theme) fail(`unknown theme "${positionals[0] ?? ""}". Try: monkeystyle list`);
+    const theme = rest[0] && getTheme(rest[0]);
+    if (!theme) fail(`unknown theme "${rest[0] ?? ""}". Try: monkeystyle list`);
     process.stdout.write(themeCSS(theme, values.selector ?? ":root", { monkeytypeNames: values["monkeytype-names"] }));
     break;
   }
@@ -105,11 +120,7 @@ switch (command) {
         .join("\n") + "\n",
     );
     break;
-  case "version":
-  case "--version":
-    process.stdout.write(`themes from ${UPSTREAM.repo}@${UPSTREAM.sha.slice(0, 7)} (${UPSTREAM.importedAt})\n`);
-    break;
   default:
     process.stdout.write(HELP);
-    if (command && command !== "help" && command !== "--help" && command !== "-h") process.exit(1);
+    process.exit(1);
 }
